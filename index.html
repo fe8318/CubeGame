@@ -37,14 +37,67 @@
       margin-top: 10px;
       font-size: 20px;
     }
+
+    /* 手機控制器 */
+    #mobileControls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .ctrl-row {
+      display: flex;
+      justify-content: center;
+      margin: 5px 0;
+    }
+
+    .ctrl-btn {
+      font-size: 24px;
+      padding: 20px;
+      margin: 2px;
+      border: none;
+      border-radius: 10px;
+      background: #444;
+      color: white;
+      width: 60px;
+      height: 60px;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    .ctrl-btn:active {
+      background: #888;
+    }
+    .ctrl-btn.skill {
+      background: darkgreen;
+    }
   </style>
 </head>
 <body>
-  <h1>得分：<span id="score">0</span>｜時間：<span id="timer">30</span>秒</h1>
+  <h1>得分：<span id="score">0</span>｜時間：<span id="timer">120</span>秒</h1>
   <div><span id="skillLabel">★</span><div id="skillBar"><div id="skillFill"></div></div></div>
   <div id="scoreText">目前得分：0</div>
   <canvas id="gameCanvas" width="1080" height="700"></canvas>
   <h2 id="result" style="display:none;">遊戲結束！</h2>
+
+  <!-- 手機控制器 -->
+  <div id="mobileControls">
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="move('up')">⬆️</button>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="move('left')">⬅️</button>
+      <button class="ctrl-btn skill" onclick="activateSkill()">★</button>
+      <button class="ctrl-btn" onclick="move('right')">➡️</button>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="move('down')">⬇️</button>
+    </div>
+  </div>
+
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -105,6 +158,7 @@
     setInterval(() => {
       if (!skillHeld && skillTime < 5) {
         skillTime += 1;
+        if (skillTime > 5) skillTime = 5;
         updateSkillBar();
       }
     }, 1000);
@@ -211,6 +265,40 @@
       if (["ArrowLeft", "ArrowRight"].includes(e.key)) blue.dx = 0;
       if (e.key === " ") skillHeld = false;
     });
+
+    // 手機按鈕控制函式
+    function move(direction) {
+      const speed = blue.speed;
+      if (direction === "up") {
+        blue.dy = -speed;
+        setTimeout(() => blue.dy = 0, 150);
+      }
+      if (direction === "down") {
+        blue.dy = speed;
+        setTimeout(() => blue.dy = 0, 150);
+      }
+      if (direction === "left") {
+        blue.dx = -speed;
+        setTimeout(() => blue.dx = 0, 150);
+      }
+      if (direction === "right") {
+        blue.dx = speed;
+        setTimeout(() => blue.dx = 0, 150);
+      }
+    }
+
+    function activateSkill() {
+      skillHeld = true;
+      setTimeout(() => skillHeld = false, 300);
+    }
+
+    // 判斷手機裝置顯示控制器
+    function isMobile() {
+      return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    }
+    if (isMobile()) {
+      document.getElementById("mobileControls").style.display = "block";
+    }
 
     updateSkillBar();
     gameLoop();
