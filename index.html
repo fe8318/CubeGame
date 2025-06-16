@@ -5,16 +5,49 @@
   <title>方塊碰撞遊戲</title>
   <style>
     body {
-      text-align: center;
+      margin: 0;
+      background: black;
       color: white;
       font-family: sans-serif;
-      background: black;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    h1 {
+      margin: 10px 0 0 0;
+      text-align: center;
+    }
+    #gameContainer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      width: 1100px; /* canvas寬1080 +說明區約200 +間距 */
     }
     canvas {
       background: black;
-      display: block;
-      margin: 0 auto;
       border: 2px solid #fff;
+      display: block;
+      width: 1080px;
+      height: 700px;
+      flex-shrink: 0;
+    }
+    #instructions {
+
+     width: 30%;              /* 寬度百分比 */
+     max-width: 500px;        /* 最大寬度限制 */
+     min-width: 400px;        /* 最小寬度限制 */
+      background: #333; /* 深灰色 */
+      border-radius: 15px;
+      padding: 15px;
+      box-sizing: border-box;
+      font-size: 14px;
+      line-height: 1.5em;
+      user-select: none;
+      color: #eee;
     }
     #skillBar {
       margin-top: 10px;
@@ -78,10 +111,26 @@
 </head>
 <body>
   <h1>得分：<span id="score">0</span>｜時間：<span id="timer">120</span>秒</h1>
-  <div><span id="skillLabel">★</span><div id="skillBar"><div id="skillFill"></div></div></div>
-  <div id="scoreText">目前得分：0</div>
-  <canvas id="gameCanvas" width="1080" height="700"></canvas>
-  <h2 id="result" style="display:none;">遊戲結束！</h2>
+
+  <div id="gameContainer">
+    <div>
+      <div><span id="skillLabel">★</span><div id="skillBar"><div id="skillFill"></div></div></div>
+      <div id="scoreText">目前得分：0</div>
+      <canvas id="gameCanvas" width="1080" height="700"></canvas>
+      <h2 id="result" style="display:none;">遊戲結束！</h2>
+    </div>
+
+    <div id="instructions">
+      <h3>操作說明</h3>
+      <ul>
+        <li>方向鍵：控制藍色方塊移動</li>
+        <li>空白鍵（★）：啟動護盾，但同時無法得分</li>
+        <li>技能可持續使用 5 秒，冷卻時間會自動回復</li>
+        <li>黃色方塊碰撞得分 +1</li>
+        <li>紅色方塊碰撞扣分 -1</li>
+      </ul>
+    </div>
+  </div>
 
   <!-- 手機控制器 -->
   <div id="mobileControls">
