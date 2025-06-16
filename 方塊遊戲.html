@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>方塊碰撞遊戲</title>
+  <style>
+    body {
+      text-align: center;
+      color: white;
+      font-family: sans-serif;
+      background: black;
+    }
+    canvas {
+      background: black;
+      display: block;
+      margin: 0 auto;
+      border: 2px solid #fff;
+    }
+    #skillBar {
+      margin-top: 10px;
+      width: 200px;
+      height: 20px;
+      background: gray;
+      position: relative;
+      display: inline-block;
+    }
+    #skillFill {
+      height: 100%;
+      background: darkgreen;
+      width: 100%;
+    }
+    #skillLabel {
+      margin-right: 10px;
+      font-size: 18px;
+    }
+    #scoreText {
+      margin-top: 10px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>得分：<span id="score">0</span>｜時間：<span id="timer">30</span>秒</h1>
+  <div><span id="skillLabel">★</span><div id="skillBar"><div id="skillFill"></div></div></div>
+  <div id="scoreText">目前得分：0</div>
+  <canvas id="gameCanvas" width="1080" height="700"></canvas>
+  <h2 id="result" style="display:none;">遊戲結束！</h2>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreDisplay = document.getElementById("score");
+    const scoreText = document.getElementById("scoreText");
+    const timerDisplay = document.getElementById("timer");
+    const resultDisplay = document.getElementById("result");
+    const skillFill = document.getElementById("skillFill");
+
+    const SIZE = 20;
+    let score = 0;
+    let timeLeft = 120;
+    let gameRunning = true;
+    let skillActive = false;
+    let skillTime = 5; // 可用技能時間最多為 5 秒
+    let skillHeld = false;
+
+    const blue = {
+      x: 290,
+      y: 190,
+      color: "blue",
+      speed: 6,
+      dx: 0,
+      dy: 0
+    };
+
+    const blocks = [];
+
+    // 藍色方塊大小變數
+    let blueSize = SIZE;
+
+    function spawnBlock(type) {
+      if (!gameRunning) return;
+      blocks.push({
+        x: Math.random() * (canvas.width - SIZE),
+        y: Math.random() * (canvas.height - SIZE),
+        dx: (Math.random() - 0.5) * 2,
+        dy: (Math.random() - 0.5) * 2,
+        color: type
+      });
+    }
+
+    const yellowInterval = setInterval(() => spawnBlock("yellow"), 1000);
+    const redInterval = setInterval(() => {
+      spawnBlock("red");
+      spawnBlock("red");
+    }, 1000);
+
+    const countdown = setInterval(() => {
+      if (!gameRunning) return;
+      timeLeft--;
+      timerDisplay.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        endGame();
+      }
+    }, 1000);
+
+    setInterval(() => {
+      if (!skillHeld && skillTime < 5) {
+        skillTime += 1;
+        updateSkillBar();
+      }
+    }, 1000);
+
+    function updateSkillBar() {
+      skillFill.style.width = `${(skillTime / 5) * 100}%`;
+    }
+
+    function endGame() {
+      gameRunning = false;
+      clearInterval(yellowInterval);
+      clearInterval(redInterval);
+      clearInterval(countdown);
+      resultDisplay.textContent = `遊戲結束！你的得分是 ${score}`;
+      resultDisplay.style.display = "block";
+    }
+
+    function update() {
+      if (!gameRunning) return;
+
+      if (skillHeld && skillTime > 0) {
+        skillActive = true;
+        skillTime -= 1 / 60;
+        if (skillTime < 0) skillTime = 0;
+        updateSkillBar();
+      } else {
+        skillActive = false;
+      }
+
+      blue.x += blue.dx;
+      blue.y += blue.dy;
+      blue.x = Math.max(0, Math.min(canvas.width - blueSize, blue.x));
+      blue.y = Math.max(0, Math.min(canvas.height - blueSize, blue.y));
+
+      for (let b of blocks) {
+        b.x += b.dx * 2;
+        b.y += b.dy * 2;
+        if (b.x < 0 || b.x > canvas.width - SIZE) b.dx *= -1;
+        if (b.y < 0 || b.y > canvas.height - SIZE) b.dy *= -1;
+      }
+
+      // 藍色方塊大小隨分數變化，最小10
+      blueSize = SIZE + score * 1;
+      if (blueSize < 10) blueSize = 10;
+
+      for (let i = blocks.length - 1; i >= 0; i--) {
+        const b = blocks[i];
+        const collisionRange = skillActive ? blueSize * 2 : blueSize;
+        const collisionX = skillActive ? blue.x - blueSize / 2 : blue.x;
+        const collisionY = skillActive ? blue.y - blueSize / 2 : blue.y;
+        if (
+          collisionX < b.x + SIZE &&
+          collisionX + collisionRange > b.x &&
+          collisionY < b.y + SIZE &&
+          collisionY + collisionRange > b.y
+        ) {
+          if (!skillActive) {
+            if (b.color === "yellow") score++;
+            if (b.color === "red") score--;
+          }
+          blocks.splice(i, 1);
+        }
+      }
+
+      scoreDisplay.textContent = score;
+      scoreText.textContent = `目前得分：${score}`;
+    }
+
+    function drawBlock(block, size = SIZE) {
+      ctx.fillStyle = block.color;
+      ctx.fillRect(block.x, block.y, size, size);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let b of blocks) {
+        drawBlock(b, SIZE);
+      }
+
+      if (skillActive) {
+        ctx.strokeStyle = 'aqua';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(blue.x - blueSize / 2, blue.y - blueSize / 2, blueSize * 2, blueSize * 2);
+      }
+      drawBlock(blue, blueSize);
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      if (gameRunning) requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") blue.dy = -blue.speed;
+      if (e.key === "ArrowDown") blue.dy = blue.speed;
+      if (e.key === "ArrowLeft") blue.dx = -blue.speed;
+      if (e.key === "ArrowRight") blue.dx = blue.speed;
+      if (e.key === " ") skillHeld = true;
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (["ArrowUp", "ArrowDown"].includes(e.key)) blue.dy = 0;
+      if (["ArrowLeft", "ArrowRight"].includes(e.key)) blue.dx = 0;
+      if (e.key === " ") skillHeld = false;
+    });
+
+    updateSkillBar();
+    gameLoop();
+  </script>
+</body>
+</html>
